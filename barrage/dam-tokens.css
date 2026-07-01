@@ -1,0 +1,63 @@
+/**
+ * dam-tokens.css
+ * --------------
+ * FICHIER DE REFERENCE DU SYSTEME DE DESIGN
+ *
+ * Ce fichier centralise les valeurs réutilisables :
+ * - couleurs de l'eau, de l'interface, des alertes
+ * - vitesses d'animation
+ * - espacements et rayons
+ *
+ * Le graphiste peut modifier ces valeurs, mais il est conseillé
+ * de ne pas supprimer les variables utilisees dans dam-widget.css
+ * et dam-artwork.css.
+ */
+
+:root {
+  /* === Eau : du plein (clair) au vide (sombre) === */
+  --water-full-top:    #5fd3ff;
+  --water-full-mid:    #1a78d6;
+  --water-full-bottom: #0b4a82;
+
+  --water-empty-top:    #1a3a5c;
+  --water-empty-mid:    #0d2844;
+  --water-empty-bottom: #071a2b;
+
+  /* === Atmosphere du barrage === */
+  --sky-glow: rgba(46, 182, 255, 0.18);
+  --mountain-color-top: #1d2f44;
+  --mountain-color-bottom: #0e1e30;
+  --dam-wall: #3a4a5a;
+  --deep-bg: #0f2540;
+
+  /* === Interface === */
+  --panel-bg: rgba(15, 30, 50, 0.86);
+  --text-primary: #e3eef7;
+  --text-secondary: #8fa9c2;
+  --text-muted: #7fa2c8;
+  --accent: #2eb6ff;
+  --success: #2ad19e;
+  --warning: #f0b338;
+  --danger: #e85a5a;
+
+  /* === Réservation / dépense ponctuelle === */
+  --reserved-stripe-1: rgba(240, 179, 56, 0.35);
+  --reserved-stripe-2: rgba(240, 179, 56, 0.55);
+  --reserved-marker: #f0b338;
+
+  /* === Jet de sortie (vanne principale) === */
+  --jet-top: #3ec6ff;
+  --jet-bottom: #1a78d6;
+
+  /* === Animations === */
+  --water-rise-speed: 0.45s;
+  --rain-speed: 0.5s;
+  --marker-move-speed: 0.3s;
+
+  /* === Espacements === */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --gap: 16px;
+}

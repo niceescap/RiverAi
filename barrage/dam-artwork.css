@@ -1,0 +1,225 @@
+/**
+ * dam-artwork.css
+ * ---------------
+ * 🎨 FICHIER DESTINE AU GRAPHISTE
+ *
+ * Ce fichier contient l'habillage visuel du barrage.
+ * Le graphiste est libre d'intervenir ici pour changer :
+ * - la forme du barrage, des montagnes, du ciel
+ * - les textures et degrades d'eau
+ * - l'effet de pluie
+ * - le jet de sortie
+ * - les marqueurs de reservation
+ *
+ * CONTRAINTES A RESPECTER :
+ * 1. Ne pas renommer les IDs suivants :
+ *    #reservoir, #water, #rainOverlay, #outputJet
+ * 2. Ne pas renommer les classes suivantes :
+ *    .dam-view, .reserved-water, .level-marker, .rain-overlay
+ * 3. Le JavaScript controle :
+ *    - la hauteur de #water pour le niveau du barrage
+ *    - la classe .active sur #rainOverlay pour la pluie
+ *    - la hauteur de #outputJet pour le debit sortant
+ *    - la position/top/height des .reserved-water et .level-marker
+ * 4. Preferer les transitions sur height, opacity, transform, background.
+ *    Eviter width, left/right, margin pour ne pas creer de tremblements.
+ *
+ * Les assets (SVG, PNG) peuvent etre places dans le dossier ./assets/
+ * et references via url('./assets/mon-asset.svg').
+ */
+
+/* ===== Conteneur principal de la scene ===== */
+.dam-view {
+  position: relative;
+  background: linear-gradient(180deg, #1a3a5c 0%, #0c2540 50%, #051a2e 100%);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  height: 520px;
+  padding: 24px;
+}
+
+/* Fond et lumiere ambiante */
+.dam-bg {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 0%, var(--sky-glow), transparent 60%),
+    linear-gradient(180deg, #2a4a6e 0%, #1a3a5c 30%, #0a2540 70%);
+  /* Exemple d'asset de fond de ciel :
+     background-image: url('./assets/sky-night.png');
+     background-size: cover;
+  */
+}
+
+/* Silhouette des montagnes */
+.mountains {
+  position: absolute; top: 0; left: 0; right: 0; height: 140px;
+  background: linear-gradient(180deg, var(--mountain-color-top) 0%, var(--mountain-color-bottom) 100%);
+  clip-path: polygon(0 40%, 10% 20%, 20% 35%, 35% 10%, 50% 30%, 65% 15%, 80% 35%, 100% 25%, 100% 100%, 0 100%);
+  opacity: 0.6;
+  /* Exemple de remplacement par SVG :
+     background: none;
+     mask-image: url('./assets/mountains.svg');
+  */
+}
+
+/* ===== Echelle ===== */
+.scale {
+  position: absolute;
+  left: 16px; top: 140px;
+  height: 240px;
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-muted);
+  z-index: 4;
+}
+.scale span { background: rgba(0,0,0,0.45); padding: 2px 6px; border-radius: 4px; }
+
+/* ===== Information de niveau ===== */
+.level-info {
+  position: absolute;
+  left: 60px; top: 160px;
+  z-index: 4;
+}
+.level-info .label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
+.level-info .pct { font-size: 42px; font-weight: 700; color: #fff; }
+.level-info .pct span { font-variant-numeric: tabular-nums; }
+.level-info .vol { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+/* ===== Reservoir et eau ===== */
+.reservoir {
+  position: absolute;
+  top: 140px; left: 50%;
+  transform: translateX(-50%);
+  width: 55%; max-width: 480px;
+  height: 240px;
+  border-left: 5px solid var(--dam-wall);
+  border-right: 5px solid var(--dam-wall);
+  border-bottom: 5px solid var(--dam-wall);
+  border-radius: 0 0 36px 36px;
+  overflow: hidden;
+  background: rgba(0,0,0,0.35);
+  z-index: 2;
+}
+
+/* L'eau proprement dite.
+   Le JS met a jour height en pourcentage pour representer le niveau. */
+.water {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 0%;
+  background: linear-gradient(180deg,
+    var(--water-full-top) 0%,
+    var(--water-mid) 55%,
+    var(--water-low) 100%
+  );
+  transition: height var(--water-rise-speed) ease, background var(--water-rise-speed) ease;
+  box-shadow: inset 0 4px 16px rgba(255,255,255,0.18);
+}
+.water::before {
+  /* Ligne de surface */
+  content: '';
+  position: absolute; top: -4px; left: 0; right: 0;
+  height: 8px;
+  background: rgba(255,255,255,0.35);
+}
+
+/* ===== Zone reservee (depense ponctuelle proposee) ===== */
+.reserved-water {
+  position: absolute;
+  left: 0; right: 0;
+  background: repeating-linear-gradient(45deg,
+    var(--reserved-stripe-1),
+    var(--reserved-stripe-1) 8px,
+    var(--reserved-stripe-2) 8px,
+    var(--reserved-stripe-2) 16px);
+  pointer-events: none;
+  transition: top var(--marker-move-speed), height var(--marker-move-speed);
+}
+
+.level-marker {
+  position: absolute;
+  right: -2px;
+  width: 14px; height: 14px;
+  background: var(--reserved-marker);
+  border-radius: 50%;
+  border: 2px solid #fff;
+  transform: translate(50%, -50%);
+  transition: top var(--marker-move-speed);
+  z-index: 3;
+}
+
+/* ===== Panneau de tendance ===== */
+.forecast-panel {
+  position: absolute;
+  right: 24px; bottom: 24px;
+  width: 180px;
+  background: rgba(10, 25, 45, 0.92);
+  border: 1px solid rgba(46,182,255,0.35);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  z-index: 4;
+}
+.forecast-panel .row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  padding: 3px 0;
+}
+.forecast-panel .row:not(:last-child) { border-bottom: 1px solid rgba(255,255,255,0.05); }
+.forecast-panel .label { color: var(--text-muted); }
+.forecast-panel .value { font-weight: 600; font-variant-numeric: tabular-nums; }
+.forecast-panel .value.pos { color: var(--success); }
+.forecast-panel .value.neg { color: var(--danger); }
+.forecast-panel .net-title {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+/* ===== Jet de sortie (vanne principale) ===== */
+.output-jet {
+  position: absolute;
+  bottom: 24px; left: 50%;
+  transform: translateX(-50%);
+  width: 34px;
+  background: linear-gradient(180deg, var(--jet-top), var(--jet-bottom));
+  border-radius: 4px;
+  opacity: 0.85;
+  transition: height 0.2s;
+  z-index: 3;
+}
+
+/* ===== Effet de pluie (recharge) ===== */
+.rain-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(46,182,255,0.06) 0%, rgba(46,182,255,0.22) 100%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 5;
+}
+.rain-overlay.active { opacity: 1; }
+.rain-overlay::after {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: repeating-linear-gradient(
+    80deg,
+    transparent 0,
+    transparent 10px,
+    rgba(173, 216, 255, 0.45) 10px,
+    rgba(173, 216, 255, 0.45) 11px
+  );
+  animation: rain var(--rain-speed) linear infinite;
+}
+@keyframes rain { to { background-position: -50px 50px; } }
+
+@media (max-width: 800px) {
+  .dam-view { height: 420px; }
+  .reservoir { width: 70%; height: 200px; top: 120px; }
+  .scale { top: 120px; height: 200px; }
+  .level-info { left: 50px; top: 135px; }
+}

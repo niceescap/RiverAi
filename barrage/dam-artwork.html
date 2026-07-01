@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <!--
+    dam-artwork.html
+    ----------------
+    PAGE DE TEST RESERVEE AU GRAPHISTE.
+    Elle contient UNIQUEMENT la scene du barrage, sans controle ni logique metier.
+    Le graphiste peut modifier dam-artwork.css et deposer ses assets dans ./assets/
+    pour tester ses idees graphiques.
+    Une fois valide, il suffit de copier le contenu de dam-artwork.css dans le projet.
+  -->
+  <title>Dam Artwork — Test graphiste</title>
+  <link rel="stylesheet" href="./dam-tokens.css">
+  <link rel="stylesheet" href="./dam-artwork.css">
+  <style>
+    body { background: var(--deep-bg); padding: 40px; }
+    .test-controls {
+      margin-top: 20px;
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .test-controls button {
+      padding: 8px 12px; border-radius: 8px; border: none;
+      background: var(--accent); color: #0a1828; cursor: pointer; font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="dam-view">
+    <div class="dam-bg"></div>
+    <div class="mountains"></div>
+    <div class="rain-overlay" id="rainOverlay"></div>
+
+    <div class="scale">
+      <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
+    </div>
+
+    <div class="level-info">
+      <div class="label">Niveau du barrage</div>
+      <div class="pct"><span id="fillPct">50</span>%</div>
+      <div class="vol"><span id="levelVol">50.00</span> M tokens</div>
+    </div>
+
+    <div class="reservoir" id="reservoir">
+      <div class="water" id="water"></div>
+    </div>
+
+    <div class="forecast-panel">
+      <div class="net-title">Tendance</div>
+      <div class="row"><span class="label">Flux</span><span class="value">+1.50 M/s</span></div>
+      <div class="row"><span class="label">Avant plein</span><span class="value">37s</span></div>
+      <div class="row"><span class="label">Avant vide</span><span class="value">—</span></div>
+    </div>
+
+    <div class="output-jet" id="outputJet"></div>
+  </div>
+
+  <div class="test-controls">
+    <button onclick="setWater(0.1)">Vide</button>
+    <button onclick="setWater(0.5)">Mi-niveau</button>
+    <button onclick="setWater(0.9)">Plein</button>
+    <button onclick="toggleRain()">Pluie</button>
+    <button onclick="setJet(0.3)">Jet faible</button>
+    <button onclick="setJet(1)">Jet fort</button>
+    <button onclick="addReserved(0.15)">Reservation 15%</button>
+    <button onclick="clearReserved()">Annuler reservation</button>
+  </div>
+
+  <script>
+    function setWater(pct) {
+      document.getElementById('water').style.height = (pct * 100) + '%';
+      document.getElementById('fillPct').textContent = Math.round(pct * 100);
+      document.getElementById('levelVol').textContent = (pct * 100).toFixed(2);
+    }
+    function toggleRain() {
+      document.getElementById('rainOverlay').classList.toggle('active');
+    }
+    function setJet(opening) {
+      document.getElementById('outputJet').style.height = (opening * 70) + 'px';
+    }
+    function addReserved(pct) {
+      clearReserved();
+      const r = document.getElementById('reservoir');
+      const current = parseFloat(document.getElementById('water').style.height || '0') / 100;
+      const height = Math.min(current, pct) * 100;
+      const top = (1 - current) * 100;
+
+      const z = document.createElement('div'); z.className = 'reserved-water';
+      z.style.top = top + '%'; z.style.height = height + '%';
+      r.appendChild(z);
+
+      const m = document.createElement('div'); m.className = 'level-marker';
+      m.style.top = (top + height) + '%';
+      r.appendChild(m);
+    }
+    function clearReserved() {
+      document.querySelectorAll('.reserved-water, .level-marker').forEach(el => el.remove());
+    }
+  </script>
+</body>
+</html>

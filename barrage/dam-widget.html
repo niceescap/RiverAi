@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RiverAI — Dam Widget Sandbox</title>
+  <!--
+    Ordre important : tokens d'abord, puis structure, puis artwork.
+    Le graphiste peut intervenir sur dam-artwork.css et le dossier assets/.
+  -->
+  <link rel="stylesheet" href="./dam-tokens.css">
+  <link rel="stylesheet" href="./dam-widget.css">
+  <link rel="stylesheet" href="./dam-artwork.css">
+</head>
+<body>
+  <div class="stage">
+    <header class="topbar">
+      <h1>RiverAI Sandbox</h1>
+      <div class="conn-status" id="connStatus">● Hors ligne</div>
+    </header>
+
+    <!-- Scene du barrage : controlee par dam-artwork.css -->
+    <div class="dam-view">
+      <div class="dam-bg"></div>
+      <div class="mountains"></div>
+      <div class="rain-overlay" id="rainOverlay"></div>
+
+      <div class="scale">
+        <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
+      </div>
+
+      <div class="level-info">
+        <div class="label">Niveau du barrage</div>
+        <div class="pct"><span id="fillPct">0</span>%</div>
+        <div class="vol"><span id="levelVol">0.00</span> M tokens</div>
+      </div>
+
+      <div class="reservoir" id="reservoir">
+        <div class="water" id="water"></div>
+      </div>
+
+      <div class="forecast-panel">
+        <div class="net-title">Tendance</div>
+        <div class="row">
+          <span class="label">Flux</span>
+          <span class="value" id="netRateText">0.00 M/s</span>
+        </div>
+        <div class="row">
+          <span class="label">Avant plein</span>
+          <span class="value" id="timeFull">—</span>
+        </div>
+        <div class="row">
+          <span class="label">Avant vide</span>
+          <span class="value" id="timeEmpty">—</span>
+        </div>
+      </div>
+
+      <div class="output-jet" id="outputJet"></div>
+    </div>
+
+    <!-- Controles -->
+    <div class="controls">
+      <div class="control-card">
+        <h3>🌊 Rivière entrante</h3>
+        <div class="value"><span id="riverValue">0.00</span> <span class="unit">M/s</span></div>
+        <input type="range" id="riverSlider" min="0" max="10" step="0.1" value="0">
+      </div>
+
+      <div class="control-card">
+        <h3>💧 Vanne principale</h3>
+        <div class="value"><span id="valveValue">0.00</span> <span class="unit">M/s</span></div>
+        <div class="gauge-wrap">
+          <div class="gauge">
+            <svg viewBox="0 0 200 110">
+              <defs>
+                <linearGradient id="gaugeGrad" x1="0%" x2="100%">
+                  <stop offset="0%" stop-color="#2ad19e"/>
+                  <stop offset="50%" stop-color="#f0b338"/>
+                  <stop offset="100%" stop-color="#e85a5a"/>
+                </linearGradient>
+              </defs>
+              <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="14" stroke-linecap="round"/>
+              <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#gaugeGrad)" stroke-width="14" stroke-linecap="round" id="gaugeArc" stroke-dasharray="251" stroke-dashoffset="251"/>
+              <circle id="gaugeNeedle" cx="180" cy="100" r="8" fill="#fff" stroke="#2eb6ff" stroke-width="3"/>
+            </svg>
+            <div class="gauge-value">
+              <div class="num" id="gaugeValueText">0%</div>
+              <div class="unit">ouverture</div>
+            </div>
+          </div>
+          <div class="gauge-labels"><span>0</span><span>Max</span></div>
+        </div>
+        <input type="range" id="valveSlider" min="0" max="10" step="0.1" value="0">
+      </div>
+
+      <div class="control-card">
+        <h3>☔ Recharge spot</h3>
+        <div style="font-size:13px; color:var(--text-secondary); margin-bottom:12px;">Paiement ponctuel</div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <button class="btn" onclick="window.dam.simulateRain(1_000_000, 3)">🌧️ +1 M</button>
+          <button class="btn" onclick="window.dam.simulateRain(5_000_000, 3)">🌦️ +5 M</button>
+          <button class="btn" onclick="window.dam.simulateRain(10_000_000, 3)">⛈️ +10 M</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Depenses ponctuelles -->
+    <div class="spend-section">
+      <h3>📥 Dépense ponctuelle (RAG)</h3>
+      <div class="spend-form">
+        <input type="number" id="spendCost" placeholder="M tokens" value="2" min="0" step="0.1">
+        <button class="btn" onclick="window.dam.addSpendFromUI()">+ Ajouter</button>
+      </div>
+      <div id="spendList" class="spend-list">
+        <div class="empty-msg">Aucune dépense en attente</div>
+      </div>
+    </div>
+
+    <!-- Historique -->
+    <footer class="footer">
+      <h3>📜 Historique</h3>
+      <div id="eventList" class="events">
+        <div class="empty-msg">Aucun événement</div>
+      </div>
+    </footer>
+  </div>
+
+  <script src="./dam-widget.js"></script>
+  <script>
+    // Initialisation
+    window.dam = new DamWidget({
+      capacity: 100_000_000,      // 100 M tokens max
+      initialLevel: 45_000_000,   // niveau initial
+      maxOutputRate: 5_000_000,   // debit max de la vanne
+      wsUrl: null                 // mettre 'ws://localhost:8002/ws' pour brancher un backend
+    });
+    window.dam.startSimulation();
+
+    // Liaison des sliders
+    document.getElementById('riverSlider').addEventListener('input', e => {
+      window.dam.setRiverRate(parseFloat(e.target.value) * 1_000_000);
+    });
+    document.getElementById('valveSlider').addEventListener('input', e => {
+      window.dam.setValveOpening(parseFloat(e.target.value) / 10);
+    });
+  </script>
+</body>
+</html>

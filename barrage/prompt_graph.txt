@@ -1,0 +1,202 @@
+# 🎨 Brief Graphiste — RiverAI Dam Widget
+
+## 1. Contexte du projet
+
+RiverAI est une application IA à connaissances spécifiques.  
+L’utilisateur consomme des **tokens** pour alimenter un assistant public (chatbot RAG) et pour réaliser des opérations ponctuelles d’import/document (scrapping, PDF, etc.).
+
+Le **Dam Widget** est la représentation visuelle de son **solde de tokens** :  
+un **barrage d’eau** dont le niveau monte et descend en fonction de ses crédits.
+
+- L’**eau** = les tokens disponibles.
+- La **rivière entrante** = les apports gratuits ou abonnement.
+- La **pluie** = les recharges payantes (achats de crédit).
+- La **vanne principale** = la consommation courante du service public LLM.
+- Les **vidanges ponctuelles** = les dépenses RAG (scraping, constitution de base de connaissances).
+
+Ce widget sera intégré dans une application web. Il ne s’agit **pas d’une landing page**, mais d’un élément d’interface vivant, lisible et engageant.
+
+---
+
+## 2. Ce que tu dois livrer
+
+Tu travailles principalement sur **un seul fichier** :
+
+- `dam-artwork.css`
+
+Et éventuellement des assets dans le dossier :
+
+- `./assets/` (SVG, PNG, textures, etc.)
+
+Tu peux tester ton travail dans le fichier fourni :
+
+- `dam-artwork.html`
+
+> Une fois satisfait, tu nous rends `dam-artwork.css` et tes assets.  
+> **Tu ne touches pas aux autres fichiers** (`dam-widget.js`, `dam-widget.html`, `dam-widget.css`).
+
+---
+
+## 3. Ambiance visuelle souhaitée
+
+### Univers
+- **Tech / nature / finance accessible.**
+- Le barrage doit évoquer une **réserve d’énergie**, pas une usine.
+- Échelle **grandiose** : le barrage représente des millions de tokens.
+- Atmosphère **nocturne, calme, premium**.
+
+### Direction chromatique
+- **Reste dans les bleus.**
+- Eau claire et lumineuse quand le barrage est plein.
+- Eau sombre et profonde quand le niveau baisse.
+- Pas de rouge/vert de signalisation. Pas de rose, pas de violet.
+- Les zones de dépense réservée peuvent être **jaunes/orangées en hachures** (déjà prévu).
+
+### Style
+- Moderne, épuré, semi-réaliste.
+- Privilégie les **gradients, les lumières douces, les reflets** plutôt que les aplats.
+- Les animations doivent être **fluides et stables**, jamais saccadées.
+
+---
+
+## 4. Les états à illustrer
+
+Ton livrable doit fonctionner visuellement sur ces 7 états :
+
+| # | État | Ce qu’il faut montrer |
+|---|------|------------------------|
+| 1 | **Barrage vide** (< 10 %) | Eau sombre, au fond, inquiétude douce |
+| 2 | **Barrage bas** (25 %) | Réserve limitée, eau plus foncée |
+| 3 | **Barrage moyen** (50 %) | Équilibre, eau bleue moyenne |
+| 4 | **Barrage plein** (> 90 %) | Eau claire, brillante, abondante |
+| 5 | **Pluie active** | Recharge animée, gouttes, ambiance humide |
+| 6 | **Vanne ouverte** | Jet d’eau sortant du barrage, dynamique |
+| 7 | **Dépense réservée** | Zone jaune/orange dans l’eau + marqueur de niveau |
+
+> Le fichier `dam-artwork.html` contient des boutons de test pour voir ces états rapidement.
+
+---
+
+## 5. Contraintes techniques impératives
+
+### IDs HTML à ne JAMAIS renommer
+
+Le JavaScript les contrôle. Ils doivent rester exactement comme ceci :
+
+- `#reservoir`
+- `#water`
+- `#rainOverlay`
+- `#outputJet`
+
+### Classes HTML à ne JAMAIS renommer
+
+- `.dam-view`
+- `.rain-overlay`
+- `.reserved-water`
+- `.level-marker`
+
+### Ce que contrôle le JavaScript
+
+| Élément | Propriété modifiée par le JS | Effet |
+|---|---|---|
+| `#water` | `height` (en %) | Niveau du barrage |
+| `#outputJet` | `height` (en px) | Débit sortant |
+| `#rainOverlay` | `.active` (classe) | Déclenche la pluie |
+| `.reserved-water` | `top` et `height` | Zone de dépense proposée |
+| `.level-marker` | `top` | Position du marqueur de seuil |
+
+### Animations conseillées / à éviter
+
+✅ **Autorisé et recommandé :**
+- `height`
+- `opacity`
+- `background`
+- `transform`
+- `top`
+- `box-shadow`
+
+❌ **À éviter :**
+- `width`
+- `left`, `right`, `margin`
+- `padding`
+- Toute animation sur des propriétés qui provoquent des recalculs de layout
+
+> Ces restrictions existent pour éviter les tremblements visuels sur des valeurs qui changent en temps réel.
+
+---
+
+## 6. Ce que tu peux changer librement
+
+Tu es libre sur tout le reste :
+
+- La forme du barrage (mur, rochers, structure).
+- Les montagnes, le ciel, les nuages, la brume.
+- Les dégradés d’eau (tant qu’ils évoluent du clair au sombre selon le niveau).
+- Les reflets à la surface.
+- Le style de la pluie (gouttes fines, rideaux, éclaboussures).
+- La forme du jet de sortie (cascade, tuyère, etc.).
+- La texture des zones réservées.
+- L’insertion d’assets SVG/PNG dans `./assets/`.
+
+Exemple d’intégration d’un asset SVG :
+
+```css
+.mountains {
+ background: none;
+ background-image: url('./assets/mountains.svg');
+ background-size: cover;
+}
+
+7. Palette et design tokens
+Les valeurs de base sont dans dam-tokens.css. Tu peux les modifier, mais n’en supprime pas l’usage dans dam-artwork.css.
+
+Variables importantes :
+
+--water-full-top    /* eau claire en haut quand plein */
+--water-full-mid    /* eau moyenne */
+--water-full-bottom /* eau foncée en bas quand plein */
+
+--water-empty-top    /* eau sombre en haut quand vide */
+--water-empty-mid
+--water-empty-bottom /* eau très sombre */
+
+--sky-glow           /* lumière ambiante */
+--mountain-color-top
+--mountain-color-bottom
+--dam-wall           /* couleur du mur du barrage */
+
+--reserved-stripe-1  /* hachure claire de réservation */
+--reserved-stripe-2  /* hachure foncée de réservation */
+--reserved-marker    /* marqueur de niveau réservé */
+
+--jet-top            /* jet sortant haut */
+--jet-bottom         /* jet sortant bas */
+
+--water-rise-speed   /* vitesse montée/descente */
+--rain-speed         /* vitesse de l'animation pluie */
+
+8. Livrables attendus
+ dam-artwork.css final
+ Dossier ./assets/ contenant SVG/PNG éventuels
+ Les 7 états visuels fonctionnent dans dam-artwork.html
+ Pas de tremblement / pas de recalcul visuel parasites
+ Responsive acceptable jusqu’à 800 px de large
+
+9. Questions fréquentes
+Puis-je utiliser un framework CSS ?
+Non, on reste en CSS pur pour limiter les dépendances.
+
+Puis-je utiliser Canvas ou WebGL ?
+Pour l’instant non. On reste sur du SVG/CSS pour faciliter l’intégration.
+
+Puis-je changer la forme du réservoir ?
+Oui, mais #water doit toujours remplir le réservoir par le bas avec height: X%.
+
+Puis-je ajouter du JavaScript ?
+Non. L’animation est gérée par le CSS et le moteur existant.
+
+Et si je veux des particules, des éclaboussures ?
+Tu peux utiliser des pseudo-éléments CSS (::before, ::after) ou des SVG animés.
+
+10. Résumé en une phrase
+Redessine l’apparence du barrage dans dam-artwork.css en respectant les noms d’éléments sacrés, pour que l’eau monte, descende, pleuve et s’écoule de manière fluide et belle.
