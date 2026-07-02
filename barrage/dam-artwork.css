@@ -3,29 +3,49 @@
  * ---------------
  * 🎨 FICHIER DESTINE AU GRAPHISTE
  *
- * Ce fichier contient l'habillage visuel du barrage.
- * Le graphiste est libre d'intervenir ici pour changer :
- * - la forme du barrage, des montagnes, du ciel
- * - les textures et degrades d'eau
- * - l'effet de pluie
- * - le jet de sortie
- * - les marqueurs de reservation
+ * v2 — "Canyon vectoriel"
+ * Reprend l'image de reference (vue en coupe : bassin vitre a gauche,
+ * mur de barrage incurve a droite, canyon rocheux en fond, ciel avec nuages).
+ * Tout est fait en CSS pur (gradients + clip-path), donc 100% vectoriel :
+ * ca reste net a n'importe quelle taille d'ecran, sans image raster.
  *
- * CONTRAINTES A RESPECTER :
- * 1. Ne pas renommer les IDs suivants :
- *    #reservoir, #water, #rainOverlay, #outputJet
- * 2. Ne pas renommer les classes suivantes :
- *    .dam-view, .reserved-water, .level-marker, .rain-overlay
- * 3. Le JavaScript controle :
- *    - la hauteur de #water pour le niveau du barrage
- *    - la classe .active sur #rainOverlay pour la pluie
- *    - la hauteur de #outputJet pour le debit sortant
- *    - la position/top/height des .reserved-water et .level-marker
- * 4. Preferer les transitions sur height, opacity, transform, background.
- *    Eviter width, left/right, margin pour ne pas creer de tremblements.
+ * CONTRAINTES RESPECTEES :
+ * 1. IDs non renommes : #reservoir, #water, #rainOverlay, #outputJet
+ * 2. Classes non renommees : .dam-view, .reserved-water, .level-marker, .rain-overlay
+ * 3. Le JavaScript controle toujours :
+ *    - la hauteur (%) de #water            -> niveau du barrage
+ *    - la classe .active sur #rainOverlay   -> pluie (etape future)
+ *    - la hauteur (px) de #outputJet        -> debit sortant (etape future)
+ *    - top/height des .reserved-water et .level-marker
+ * 4. On n'anime que height / opacity / transform / background / top / box-shadow.
+ *    Jamais width / left / right / margin / padding -> pas de tremblement.
  *
- * Les assets (SVG, PNG) peuvent etre places dans le dossier ./assets/
- * et references via url('./assets/mon-asset.svg').
+ * ASTUCE TECHNIQUE CLE (a lire avant de modifier #water) :
+ * -----------------------------------------------------------
+ * On veut que l'eau soit CLAIRE en surface et SOMBRE en profondeur, quel que
+ * soit le niveau (10% comme 90%). Le JS ne fait que changer `height`, il ne
+ * change aucune couleur. La solution 100% CSS est un "gradient surdimensionne" :
+ *   - le gradient de #water est mis a la taille MAXIMALE du reservoir
+ *     (background-size: 100% <hauteur max en px>)
+ *   - il est ancre en bas (background-position: bottom)
+ * Resultat : quand #water est petit (barrage vide), on ne voit que le BAS
+ * du gradient (donc les teintes sombres). Quand #water est a 100%, on voit
+ * tout le gradient, du clair (haut) au sombre (bas). Aucune JS necessaire.
+ * -> Si tu changes la hauteur du `.reservoir`, mets a jour `background-size`
+ *    de `#water` a la MEME valeur (desktop ET media query mobile).
+ *
+ * STRUCTURE DE CALQUES (fond -> premier plan) :
+ *   .dam-bg              ciel + lueur ambiante + nuages
+ *   .mountains           bande de terrain fissure en haut (horizon du canyon)
+ *   .dam-view::before    paroi rocheuse du canyon (gauche)
+ *   .dam-view::after     mur du barrage en beton (droite, incurve, vanne)
+ *   .reservoir           interieur du bassin (air/vitre au-dessus de l'eau)
+ *   .reservoir::before   fond carrele du bassin (visible quand l'eau est basse)
+ *   #water               eau animee (hauteur controlee par le JS)
+ *   .reserved-water / .level-marker   zones de depense (controlees par le JS)
+ *   .reservoir::after    reflets/aretes de vitre (habillage du "bassin en verre")
+ *   .output-jet          sortie d'eau au niveau de la vanne (etape future)
+ *   .rain-overlay         pluie (etape future)
  */
 
 /* ===== Conteneur principal de la scene ===== */
@@ -38,34 +58,87 @@
   padding: 24px;
 }
 
-/* Fond et lumiere ambiante */
+/* Fond de ciel + lueur ambiante + nuages (simples ellipses en gradient) */
 .dam-bg {
   position: absolute; inset: 0;
   background:
+    /* deux nuages doux en haut a gauche, comme sur la reference */
+    radial-gradient(ellipse 90px 26px at 18% 10%, rgba(226, 240, 250, 0.55), transparent 70%),
+    radial-gradient(ellipse 70px 20px at 32% 6%,  rgba(226, 240, 250, 0.4),  transparent 70%),
+    /* lueur ambiante centrale (definie dans dam-tokens.css) */
     radial-gradient(ellipse at 50% 0%, var(--sky-glow), transparent 60%),
     linear-gradient(180deg, #2a4a6e 0%, #1a3a5c 30%, #0a2540 70%);
-  /* Exemple d'asset de fond de ciel :
-     background-image: url('./assets/sky-night.png');
-     background-size: cover;
-  */
 }
 
-/* Silhouette des montagnes */
+/* Bande de terrain fissure en haut : horizon du canyon vu depuis le dessus */
 .mountains {
-  position: absolute; top: 0; left: 0; right: 0; height: 140px;
-  background: linear-gradient(180deg, var(--mountain-color-top) 0%, var(--mountain-color-bottom) 100%);
-  clip-path: polygon(0 40%, 10% 20%, 20% 35%, 35% 10%, 50% 30%, 65% 15%, 80% 35%, 100% 25%, 100% 100%, 0 100%);
-  opacity: 0.6;
-  /* Exemple de remplacement par SVG :
-     background: none;
-     mask-image: url('./assets/mountains.svg');
-  */
+  position: absolute; top: 0; left: 0; right: 0; height: 110px;
+  background:
+    /* fissures fines qui rappellent les rivieres/craquelures de l'image */
+    repeating-linear-gradient(115deg, transparent 0 26px, rgba(255,255,255,0.05) 26px 27px),
+    repeating-linear-gradient(70deg,  transparent 0 34px, rgba(255,255,255,0.04) 34px 35px),
+    linear-gradient(180deg, var(--mountain-color-top) 0%, var(--mountain-color-bottom) 100%);
+  clip-path: polygon(0 30%, 12% 45%, 22% 20%, 34% 40%, 48% 15%, 60% 38%, 74% 18%, 88% 36%, 100% 22%, 100% 100%, 0 100%);
+  opacity: 0.75;
+}
+
+/* ===== Paroi rocheuse du canyon (gauche) =====
+   Pseudo-element du conteneur global : grand aplat rocheux avec un bord
+   droit dechiquete (la roche taillee par le canyon), + fines veines. */
+.dam-view::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 44%;
+  background:
+    repeating-linear-gradient(58deg, transparent 0 22px, rgba(255,255,255,0.05) 22px 23px),
+    repeating-linear-gradient(-64deg, transparent 0 30px, rgba(255,255,255,0.04) 30px 31px),
+    linear-gradient(120deg, var(--mountain-color-top) 0%, #16283c 45%, var(--mountain-color-bottom) 100%);
+  clip-path: polygon(
+    0 0, 100% 0,
+    82% 8%, 100% 16%,
+    76% 26%, 100% 34%,
+    84% 46%, 100% 56%,
+    78% 68%, 100% 80%,
+    86% 92%, 100% 100%,
+    0 100%
+  );
+  z-index: 1;
+}
+
+/* ===== Mur du barrage en beton (droite) =====
+   Pseudo-element : facade incurvee, rainuree comme du beton banche,
+   avec la fente de la salle de controle et une vanne stylisee. */
+.dam-view::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 60%;
+  background:
+    /* petite roue de vanne (cercle clair) */
+    radial-gradient(circle 8px at 44% 82%, #d7e3ec 0%, #d7e3ec 55%, rgba(215,227,236,0.15) 65%, transparent 70%),
+    /* tuyau de vanne */
+    linear-gradient(180deg, #4c5c6c, #2a3542) no-repeat 42.5% 85% / 3% 9%,
+    /* fente verticale de la salle de controle */
+    linear-gradient(180deg, rgba(4,10,18,0.92), rgba(4,10,18,0.7)) no-repeat 45% 10% / 5% 50%,
+    /* halo lumineux en haut de la facade */
+    linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 42%),
+    /* rainures verticales façon beton banche */
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.07) 0 2px, transparent 2px 36px),
+    /* degrade de profondeur de la facade */
+    linear-gradient(135deg, #46586a 0%, var(--dam-wall) 55%, #1c2733 100%);
+  clip-path: polygon(
+    22% 0%, 15% 10%, 8% 25%, 3% 40%, 0% 50%, 3% 60%, 8% 75%, 15% 90%, 22% 100%,
+    100% 100%, 100% 0%
+  );
+  box-shadow: -8px 0 24px rgba(0,0,0,0.35) inset;
+  z-index: 1;
 }
 
 /* ===== Echelle ===== */
 .scale {
   position: absolute;
-  left: 16px; top: 140px;
+  left: calc(6% - 30px); top: 120px;
   height: 240px;
   display: flex;
   flex-direction: column-reverse;
@@ -79,50 +152,87 @@
 /* ===== Information de niveau ===== */
 .level-info {
   position: absolute;
-  left: 60px; top: 160px;
+  left: 16px; top: 18px;
   z-index: 4;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.55);
 }
 .level-info .label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
-.level-info .pct { font-size: 42px; font-weight: 700; color: #fff; }
+.level-info .pct { font-size: 38px; font-weight: 700; color: #fff; }
 .level-info .pct span { font-variant-numeric: tabular-nums; }
 .level-info .vol { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
 
-/* ===== Reservoir et eau ===== */
+/* ===== Reservoir : le "bassin en verre" en coupe =====
+   Represente la coupe transparente de l'image de reference : on voit
+   l'eau de profil, avec un fond carrele visible quand le niveau est bas. */
 .reservoir {
   position: absolute;
-  top: 140px; left: 50%;
-  transform: translateX(-50%);
-  width: 55%; max-width: 480px;
+  top: 120px; left: 6%;
+  width: 34%; max-width: 380px;
   height: 240px;
-  border-left: 5px solid var(--dam-wall);
-  border-right: 5px solid var(--dam-wall);
-  border-bottom: 5px solid var(--dam-wall);
-  border-radius: 0 0 36px 36px;
+  border: 2px solid rgba(210, 232, 250, 0.28);
+  border-top: none;
+  border-radius: 4px 4px 12px 12px;
   overflow: hidden;
-  background: rgba(0,0,0,0.35);
+  background: linear-gradient(180deg, rgba(6, 16, 28, 0.55), rgba(4, 10, 20, 0.75));
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.25),
+    0 18px 30px rgba(0,0,0,0.35),
+    inset 0 0 24px rgba(0,0,0,0.4);
   z-index: 2;
 }
 
+/* Fond carrele du bassin : visible sous l'eau, surtout quand le niveau est bas.
+   Genere en ::before pour rester DERRIERE #water sans avoir besoin de z-index. */
+.reservoir::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 26%;
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.07) 0 1px, transparent 1px 32px),
+    repeating-linear-gradient(0deg,  rgba(255,255,255,0.07) 0 1px, transparent 1px 32px),
+    linear-gradient(180deg, rgba(18, 34, 50, 0.55), rgba(6, 14, 24, 0.85));
+}
+
 /* L'eau proprement dite.
-   Le JS met a jour height en pourcentage pour representer le niveau. */
+   Le JS met a jour `height` en pourcentage pour representer le niveau.
+   Le gradient est surdimensionne + ancre en bas : voir l'astuce en tete
+   de fichier. 240px = hauteur du .reservoir ci-dessus (a garder synchro). */
 .water {
   position: absolute;
   bottom: 0; left: 0; right: 0;
   height: 0%;
-  background: linear-gradient(180deg,
+  background-image: linear-gradient(180deg,
     var(--water-full-top) 0%,
-    var(--water-mid) 55%,
-    var(--water-low) 100%
+    var(--water-full-mid) 32%,
+    var(--water-full-bottom) 52%,
+    var(--water-empty-mid) 74%,
+    var(--water-empty-bottom) 100%
   );
-  transition: height var(--water-rise-speed) ease, background var(--water-rise-speed) ease;
+  background-size: 100% 240px;
+  background-position: bottom center;
+  background-repeat: no-repeat;
+  transition: height var(--water-rise-speed) ease;
   box-shadow: inset 0 4px 16px rgba(255,255,255,0.18);
 }
 .water::before {
-  /* Ligne de surface */
+  /* Ligne de surface, plus lumineuse que le corps de l'eau */
   content: '';
   position: absolute; top: -4px; left: 0; right: 0;
   height: 8px;
   background: rgba(255,255,255,0.35);
+}
+
+/* Reflets / aretes du bassin en verre : au-dessus de tout, purement decoratif.
+   Genere en ::after pour rester DEVANT #water sans avoir besoin de z-index. */
+.reservoir::after {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,0.16) 0%, transparent 3%),
+    linear-gradient(270deg, rgba(255,255,255,0.10) 0%, transparent 4%),
+    linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 12%);
+  pointer-events: none;
 }
 
 /* ===== Zone reservee (depense ponctuelle proposee) ===== */
@@ -180,12 +290,15 @@
   margin-bottom: 6px;
 }
 
-/* ===== Jet de sortie (vanne principale) ===== */
+/* ===== Jet de sortie (vanne principale) =====
+   Positionne au niveau de la vanne dessinee sur le mur du barrage
+   (voir .dam-view::after) pour preparer l'etape "vanne/tumulte" future.
+   Le JS controle uniquement `height` (etape future) ; ici on ne fixe
+   que la position et l'apparence. */
 .output-jet {
   position: absolute;
-  bottom: 24px; left: 50%;
-  transform: translateX(-50%);
-  width: 34px;
+  bottom: 26px; left: 45%;
+  width: 20px;
   background: linear-gradient(180deg, var(--jet-top), var(--jet-bottom));
   border-radius: 4px;
   opacity: 0.85;
@@ -193,7 +306,9 @@
   z-index: 3;
 }
 
-/* ===== Effet de pluie (recharge) ===== */
+/* ===== Effet de pluie (recharge) =====
+   Squelette conserve pour l'etape future : le JS bascule .active,
+   l'habillage visuel (gouttes, rideau) sera ajoute a ce moment-la. */
 .rain-overlay {
   position: absolute; inset: 0;
   background: linear-gradient(180deg, rgba(46,182,255,0.06) 0%, rgba(46,182,255,0.22) 100%);
@@ -219,7 +334,19 @@
 
 @media (max-width: 800px) {
   .dam-view { height: 420px; }
-  .reservoir { width: 70%; height: 200px; top: 120px; }
-  .scale { top: 120px; height: 200px; }
-  .level-info { left: 50px; top: 135px; }
+
+  .dam-view::before { width: 40%; }
+  .dam-view::after { width: 64%; }
+
+  .mountains { height: 80px; }
+
+  .reservoir { width: 46%; max-width: none; height: 190px; top: 96px; }
+  /* IMPORTANT : garder cette valeur synchronisee avec la hauteur du .reservoir ci-dessus */
+  .water { background-size: 100% 190px; }
+
+  .scale { left: calc(6% - 26px); top: 96px; height: 190px; }
+  .level-info { left: 12px; top: 12px; }
+  .level-info .pct { font-size: 30px; }
+
+  .output-jet { bottom: 20px; }
 }
