@@ -1,27 +1,26 @@
 /**
  * dam-artwork.css
  * ---------------
- * CSS64 PROTOGRAPH — v3 "Hydro-Graphite"
- * TOUT objet visuel de cette scene a ete entierement reconstruit
- * en CSS pur. Zero asset externe. Temps de rendu optimise : chaque
- * calque est un pseudo-element ; chaque texture est en gradient repe.
- * 1100+ lignes ; 10 couches pseudo-elements max empilees.
+ * v3 — CSS64 PROTOGRAPH "Hydro-Graphite"
+ * Zero asset. Tout en CSS pur : gradients, clip-path, pseudo-elements.
+ * Architecture : dam-view::before pour le lake (pas de clip-path),
+ * dam-bg::before pour le canyon gauche, dam-bg::after pour le mur droit.
  *
- * GLOSSAIRE TECHNIQUE (pour les futurs contributeurs) :
- *   "OVERDRIVEN GRADIENT" : degrade 5x plus haut que le contenant
- *   pour que seul le bas (sombre) reste visible quand l'eau est basse.
- *   "8-LAYER" : 8 pseudo-elements independants pour simuler la densite
- *   particulaire en profondeur sans jamais lire le niveau du DOM.
- *   "ARC FLOW" : pseudo-element SVG encode en data-URI pour dessiner
- *   un arc de parabole inscrit dans un pseudo-element CSS classique.
- *   "SNOEMOTION" : media query respectueuse des preferences motion.
+ * ASTUCE "Overdriven Gradient" sur #water :
+ *   Le gradient fait 5x la hauteur du reservoir (1200px) et est ancre
+ *   en bas (background-position: bottom). Resultat : quand l'eau est
+ *   basse, seul le BAS sombre du gradient est visible. Quand pleine,
+ *   on voit les teintes claires du HAUT. Aucune couleur ne change.
+ *   Seul `height` varie. C'est le moteur JS qui pilote.
+ *   Si tu changes la hauteur du reservoir, synchronise background-size.
  *
- * Contraintes moteur : ids/classes sacres + height/top/opacity/transform
- * sont les seules proprietes animees. Aucun layout-busting jamais.
+ * Contraintes respectees :
+ *   - ids/classes sacres intacts
+ *   - animations uniquement sur height/opacity/transform/background/top
  */
 
 /* ================================================================
-   CONTENEUR SCENE
+   SCENE
    ================================================================ */
 .dam-view {
   position: relative;
@@ -33,55 +32,41 @@
 }
 
 /* ================================================================
-   CIEL — 3 couches de nuages ; lueur galactique ; horizon subtil
+  CIEL — 3 nuages + lueur ambiante
    ================================================================ */
 .dam-bg {
   position: absolute; inset: 0;
   background:
-    /* --- Couche 3 : deux gros nuages en haut --- */
     radial-gradient(ellipse 120px 30px at 22% 11%,
                     rgba(220,240,255,0.52), transparent 72%),
     radial-gradient(ellipse 80px 20px at 35% 7%,
                     rgba(220,240,255,0.38), transparent 68%),
     radial-gradient(ellipse 60px 14px at 48% 10%,
                     rgba(220,240,255,0.22), transparent 65%),
-    /* --- Couche 2 : brume diffuse --- */
     radial-gradient(ellipse at 50% 5%,
                     rgba(46,182,255,0.14), transparent 65%),
-    /* --- Couche 1 : degrade ciel nuit-toile --- */
     linear-gradient(180deg,
-      #243b57 0%,
-      #1b304a 18%,
-      #132a45 35%,
-      #0c2540 60%,
-      #061a2d 100%);
+      #243b57 0%, #1b304a 18%,
+      #132a45 35%, #0c2540 60%, #061a2d 100%);
 }
 
-/* Etoiles : 6 minuscules radial-gradients dans un pseudo global */
-.dam-view::before {
-  content: none;  /* reserve pour LP */ }
-
 /* ================================================================
-   MONTAGNE HORIZONTALE (folded ridges)
+   MONTAGNE HORIZONTALE (ridge folds)
    ================================================================ */
 .mountains {
   position: absolute;
   top: 0; left: -2%; right: -2%; height: 104px;
   background:
-    /* --- Ridge 3 : arriere, brumeux --- */
-    linear-gradient(330deg,
-      transparent 45%, rgba(255,255,255,0.055) 45%, rgba(255,255,255,0.055) 46%, transparent 46%),
-    linear-gradient(245deg,
-      transparent 52%, rgba(255,255,255,0.045) 52%, rgba(255,255,255,0.045) 53%, transparent 53%),
-    /* --- Ridge 2 : moyenne --- */
-    linear-gradient(210deg,
-      transparent 40%, rgba(255,255,255,0.075) 40%, rgba(255,255,255,0.075) 41%, transparent 41%),
-    linear-gradient(155deg,
-      transparent 55%, rgba(255,255,255,0.06) 55%, rgba(255,255,255,0.06) 56%, transparent 56%),
-    /* --- Ridge 1 : avant, plus net --- */
-    linear-gradient(180deg,
-      transparent 38%, rgba(255,255,255,0.1) 38%, rgba(255,255,255,0.1) 39%, transparent 39%),
-    /* --- Base : degrade montagne --- */
+    linear-gradient(330deg, transparent 45%,
+      rgba(255,255,255,0.055) 45%, rgba(255,255,255,0.055) 46%, transparent 46%),
+    linear-gradient(245deg, transparent 52%,
+      rgba(255,255,255,0.045) 52%, rgba(255,255,255,0.045) 53%, transparent 53%),
+    linear-gradient(210deg, transparent 40%,
+      rgba(255,255,255,0.075) 40%, rgba(255,255,255,0.075) 41%, transparent 41%),
+    linear-gradient(155deg, transparent 55%,
+      rgba(255,255,255,0.06) 55%, rgba(255,255,255,0.06) 56%, transparent 56%),
+    linear-gradient(180deg, transparent 38%,
+      rgba(255,255,255,0.1) 38%, rgba(255,255,255,0.1) 39%, transparent 39%),
     linear-gradient(180deg,
       var(--mountain-color-top) 0%,
       var(--mountain-color-bottom) 100%);
@@ -95,7 +80,7 @@
 }
 
 /* ================================================================
-   LAKE (arriere — nuages refletes + vaguelettes subsoniques)
+   LAKE (dam-view::before — pas de clip-path, uniquement fond)
    ================================================================ */
 .dam-view::before {
   content: '';
@@ -103,28 +88,19 @@
   top: 92px; left: 0; right: 0;
   height: 70px;
   background:
-    /* --- Reflets neigeux en arriere-plan --- */
     radial-gradient(ellipse 85px 16px at 20% 8%,
                     rgba(255,255,255,0.12), transparent 65%),
     radial-gradient(ellipse 55px 10px at 34% 4%,
                     rgba(255,255,255,0.08), transparent 65%),
-    /* --- Ride 2 --- */
     repeating-linear-gradient(92deg,
       transparent 0 38px, rgba(255,255,255,0.018) 38px 40px,
       transparent 40px 78px),
-    /* --- Ride 1 --- */
     repeating-linear-gradient(88deg,
       transparent 0 28px, rgba(255,255,255,0.022) 28px 30px,
       transparent 30px 58px),
-    /* --- Surface eau --- */
-    linear-gradient(180deg,
-      #245674 0%, #1e4b6a 50%, #173e5b 100%);
-  z-index: 1;
-}
-
-/* Maree horizontale subtile : leger mouvement des rides */
-.dam-view::before {
+    linear-gradient(180deg, #245674 0%, #1e4b6a 50%, #173e5b 100%);
   animation: lake-tide 6s ease-in-out infinite alternate;
+  z-index: 1;
 }
 @keyframes lake-tide {
   from { background-position: 0 0, 0 0, 0 0, 0 0, 0 0; }
@@ -132,160 +108,124 @@
 }
 
 /* ================================================================
-   CANYON PAROI GAUCHE (geostriated face)
+   CANYON GAUCHE (dam-bg::before — clip-path + ombres)
    ================================================================ */
-.dam-view::before {
+.dam-bg::before {
   content: '';
   position: absolute;
   left: 0; top: 0;
-  width: 44%; height: 100%;
+  width: 46%; height: 100%;
   background:
-    /* --- Veines 3 (arriere, larges) --- */
     repeating-linear-gradient(58deg,
       transparent 0 42px, rgba(255,255,255,0.032) 42px 43px),
     repeating-linear-gradient(-62deg,
       transparent 0 54px, rgba(255,255,255,0.025) 54px 55px),
-    /* --- Veines 2 (moyens) --- */
     repeating-linear-gradient(42deg,
       transparent 0 22px, rgba(0,0,0,0.18) 22px 23px),
     repeating-linear-gradient(-74deg,
       transparent 0 30px, rgba(0,0,0,0.12) 30px 31px),
-    /* --- Veines 1 (avant, fines) --- */
     repeating-linear-gradient(32deg,
       transparent 0 14px, rgba(255,255,255,0.045) 14px 15px),
     repeating-linear-gradient(-48deg,
       transparent 0 18px, rgba(255,255,255,0.035) 18px 19px),
-    /* --- Cascade minerale --- */
     linear-gradient(120deg,
       var(--mountain-color-top) 0%,
-      #15293d 30%,
-      #0e1e30 68%,
-      #06131f 100%);
+      #15293d 30%, #0e1e30 68%, #06131f 100%);
   clip-path: polygon(
     0 0, 100% 0,
-    84% 7%, 100% 13%,
-    78% 23%, 100% 29%,
-    82% 41%, 100% 49%,
-    76% 61%, 100% 71%,
-    84% 81%, 100% 89%,
-    88% 95%, 100% 100%,
-    0 100%
+    84% 7%, 100% 13%, 78% 23%, 100% 29%,
+    82% 41%, 100% 49%, 76% 61%, 100% 71%,
+    84% 81%, 100% 89%, 88% 95%, 100% 100%, 0 100%
   );
   box-shadow:
     inset -10px 0 30px rgba(0,0,0,0.42),
     8px 0 14px rgba(0,0,0,0.28);
-  z-index: 2;
+  z-index: 1;
 }
 
 /* ================================================================
-   MUR BARRAGE DROIT — "ferrocrete" (beton armure)
+   MUR BARRAGE DROIT (dam-bg::after — beton banche + vanne)
    ================================================================ */
-.dam-view::after {
+.dam-bg::after {
   content: '';
   position: absolute;
   right: 0; top: 0;
-  width: 60%; height: 100%;
+  width: 62%; height: 100%;
   background:
-    /* --- Rescape halo lumineux en haut centre --- */
     radial-gradient(ellipse 45% 30% at 50% 14%,
       rgba(95,214,255,0.14), transparent 70%),
-    /* --- Jointures horizontales (anneaux de construction) --- */
     repeating-linear-gradient(180deg,
       transparent 0 9.5%, rgba(0,0,0,0.35) 9.5%,
       rgba(0,0,0,0.35) 10%, transparent 10%),
-    /* --- Jointures verticales --- */
     repeating-linear-gradient(90deg,
       transparent 0 11.8%, rgba(0,0,0,0.28) 11.8%,
       rgba(0,0,0,0.28) 12%, transparent 12%),
-    /* --- Rainures de beton --- */
     repeating-linear-gradient(90deg,
       rgba(255,255,255,0.055) 0 2px, transparent 2px 34px),
-    /* --- Highlights lateraux --- */
     linear-gradient(90deg,
       rgba(0,0,0,0.55) 0%, transparent 8%,
       transparent 92%, rgba(0,0,0,0.55) 100%),
-    /* --- Joint central (crevasse verticale sombre) --- */
     linear-gradient(90deg,
       transparent 46%, rgba(2,8,14,0.55) 46%,
       rgba(2,8,14,0.55) 54%, transparent 54%),
-    /* --- Fond beton degrade --- */
     linear-gradient(135deg,
       #4c6278 0%, var(--dam-wall) 42%,
       #2a3745 78%, #131d28 100%);
   clip-path: polygon(
-    24% 0%, 18% 8%, 11% 20%, 6% 34%, 2% 48%,
-    0% 58%, 2% 68%, 6% 78%, 11% 88%, 18% 96%,
-    24% 100%, 100% 100%, 100% 0%
+    26% 0%, 20% 8%, 13% 20%, 8% 34%, 4% 48%,
+    2% 58%, 4% 68%, 8% 78%, 13% 88%, 20% 96%,
+    26% 100%, 100% 100%, 100% 0%
   );
   box-shadow: -12px 0 28px rgba(0,0,0,0.45) inset;
-  z-index: 2;
+  z-index: 1;
 }
 
 /* ================================================================
-   VANNE MECANIQUE (sur le mur convexe)
-   Porte : un pseudo-element supplementaire du mur.
+   VANNE MECANIQUE SUR LE MUR (valve-housing)
    ================================================================ */
-.dam-view::after {
-  /* aucun ajout necessaire ici : la vanne est un separate pseudo
-     sous .valve-housing reutilisant le river-token SVG encodable */
-}
-
-/* --- Contour de la vanne temporaire --- */
 .valve-housing {
   position: absolute;
   right: 0; top: 0;
-  width: 60%; height: 100%;
+  width: 62%; height: 100%;
   pointer-events: none;
   z-index: 3;
 }
 .valve-housing::before {
   content: '';
   position: absolute;
-  left: 39%; bottom: 22%;           /* position sur le mur */
+  left: 41%; bottom: 22%;
   width: 52px; height: 52px;
   background:
-    /* Roue croisillons */
     repeating-conic-gradient(
       from 0deg,
-      rgba(210,220,232,0.32) 0deg 5deg,
-      transparent 5deg 30deg
+      rgba(210,220,232,0.32) 0deg 5deg, transparent 5deg 30deg
     ),
-    /* Centre pince */
     radial-gradient(circle at 50% 50%,
       rgba(240,245,255,0.78) 0%,
-      rgba(210,225,240,0.35) 45%,
-      transparent 70%),
-    /* Fond valve */
-    linear-gradient(145deg,
-      #4a5f73 0%, #2a3c4d 100%);
+      rgba(210,225,240,0.35) 45%, transparent 70%),
+    linear-gradient(145deg, #4a5f73 0%, #2a3c4d 100%);
   border-radius: 50%;
   border: 3px solid rgba(210,225,240,0.35);
   box-shadow:
     0 0 12px rgba(46,182,255,0.2),
     0 6px 14px rgba(0,0,0,0.35);
 }
-/* Croisillon dynamique (rotation quand ouverte) */
 .valve-housing::after {
   content: '';
   position: absolute;
-  left: 39%; bottom: 22%;
+  left: 41%; bottom: 22%;
   width: 52px; height: 52px;
   background:
     conic-gradient(
       from 0deg at 50% 50%,
-      transparent 0deg 88deg,
-      rgba(255,255,255,0.42) 88deg 92deg,
-      transparent 92deg 178deg,
-      rgba(255,255,255,0.42) 178deg 182deg,
-      transparent 182deg 268deg,
-      rgba(255,255,255,0.42) 268deg 272deg,
-      transparent 272deg 358deg,
-      rgba(255,255,255,0.42) 358deg 360deg
+      transparent 0deg 88deg, rgba(255,255,255,0.42) 88deg 92deg,
+      transparent 92deg 178deg, rgba(255,255,255,0.42) 178deg 182deg,
+      transparent 182deg 268deg, rgba(255,255,255,0.42) 268deg 272deg,
+      transparent 272deg 358deg, rgba(255,255,255,0.42) 358deg 360deg
     );
   border-radius: 50%;
   animation: valve-spin 5s linear infinite paused;
 }
-/* Active seulement si la valve est ouverte : le JS ajoute la classe .active */
 .valve-housing.active::after {
   animation-play-state: running;
 }
@@ -294,17 +234,8 @@
   to   { transform: rotate(360deg); }
 }
 
-/* --- Tuyau sortant valorise par ecume --- */
-.valve-housing {
-  /* aucune propriete supplementaire ; positionnement complet */
-}
-.valve-housing::before,
-.valve-housing::after {
-  /* deja regle ci-dessus */
-}
-
 /* ================================================================
-   LAURIER RIVIERE SORTANTE (SCHappyRecall)
+   LAURIER RIVIERE SORTANTE (serene-channel)
    ================================================================ */
 .serene-channel {
   position: absolute;
@@ -314,48 +245,37 @@
   pointer-events: none;
   z-index: 3;
 }
-
-/* --- Sole de la riviere (lit rocheux + eau calme) --- */
 .serene-channel::before {
   content: '';
   position: absolute;
   left: 0; right: 0; bottom: 0;
   height: 100%;
   background:
-    /* --- Ecume amortie --- */
     radial-gradient(ellipse 28% 18% at 52% 26%,
       rgba(255,255,255,0.18), transparent 65%),
     radial-gradient(ellipse 22% 12% at 58% 32%,
       rgba(255,255,255,0.1), transparent 60%),
-    /* --- Reflets neigeux en surface --- */
     repeating-linear-gradient(92deg,
       transparent 0 16px, rgba(255,255,255,0.035) 16px 18px,
       transparent 18px 34px),
-    /* --- Fond lit rocheux --- */
     linear-gradient(180deg,
       rgba(18,34,50,0.45) 0%,
       rgba(10,22,36,0.65) 70%,
       rgba(6,14,24,0.9) 100%);
   clip-path: polygon(
-    36% 0%, 100% 0%,
-    100% 100%, 34% 100%,
-    32% 88%, 36% 76%,
-    34% 60%, 38% 48%,
-    34% 34%, 38% 18%,
-    34% 6%
+    36% 0%, 100% 0%, 100% 100%, 34% 100%,
+    32% 88%, 36% 76%, 34% 60%, 38% 48%,
+    34% 34%, 38% 18%, 34% 6%
   );
 }
-
-/* --- Reflets vifs : fines trainees lumineuses --- */
 .serene-channel::after {
   content: '';
   position: absolute;
   left: 62%; right: 4%; bottom: 6px;
   height: 3px;
-  background:
-    repeating-linear-gradient(90deg,
-      transparent 0 18px, rgba(255,255,255,0.35) 18px 32px,
-      transparent 32px 54px);
+  background: repeating-linear-gradient(90deg,
+    transparent 0 18px, rgba(255,255,255,0.35) 18px 32px,
+    transparent 32px 54px);
   animation: channel-glint 3s ease-in-out infinite alternate;
   filter: blur(0.5px);
 }
@@ -365,7 +285,7 @@
 }
 
 /* ================================================================
-   ECHELLE (graduations mesurees 0-100%)
+   ECHELLE (graduations 0-100%)
    ================================================================ */
 .scale {
   position: absolute;
@@ -384,7 +304,6 @@
   border-radius: 4px;
   line-height: 1;
 }
-/* Petits traits graduants */
 .scale::after {
   content: '';
   position: absolute;
@@ -396,7 +315,7 @@
 }
 
 /* ================================================================
-   INFO NIVEAU (texte en coin haut-gauche)
+   INFO NIVEAU
    ================================================================ */
 .level-info {
   position: absolute;
@@ -404,13 +323,27 @@
   z-index: 5;
   text-shadow: 0 2px 10px rgba(0,0,0,0.65);
 }
-.level-info .label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
-.level-info .pct { font-size: 38px; font-weight: 700; color: #fff; line-height: 1.05; }
+.level-info .label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.level-info .pct {
+  font-size: 38px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.05;
+}
 .level-info .pct span { font-variant-numeric: tabular-nums; }
-.level-info .vol { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+.level-info .vol {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
 
 /* ================================================================
-   RESERVOIR — coupe vitree
+   RESERVOIR (coupe vitree)
    ================================================================ */
 .reservoir {
   position: absolute;
@@ -421,7 +354,6 @@
   border-top: none;
   border-radius: 3px 3px 14px 14px;
   overflow: hidden;
-  /* Interieur : vide qui voit le fond carrele */
   background: linear-gradient(180deg,
     rgba(5,12,22,0.25) 0%,
     rgba(5,12,22,0.45) 60%,
@@ -434,7 +366,7 @@
 }
 
 /* ================================================================
-   FOND CARRELE (perspective isometrique)
+   FOND CARRELE (perspective isometrique visible sous l'eau basse)
    ================================================================ */
 .reservoir::before {
   content: '';
@@ -442,16 +374,13 @@
   left: 0; right: 0; bottom: 0;
   height: 32%;
   background:
-    /* --- Refraction optique de la vitre --- */
     linear-gradient(95deg, rgba(255,255,255,0.06) 0%, transparent 35%),
-    /* --- Jointures en perspective --- */
     repeating-linear-gradient(90deg,
       transparent 0 29px, rgba(255,255,255,0.06) 29px 30px,
       transparent 30px 60px),
     repeating-linear-gradient(0deg,
       transparent 0 29px, rgba(255,255,255,0.06) 29px 30px,
       transparent 30px 60px),
-    /* --- Carrelage en degrade de profondeur --- */
     linear-gradient(180deg,
       rgba(16,36,56,0.4) 0%,
       rgba(7,18,30,0.7) 60%,
@@ -459,32 +388,26 @@
 }
 
 /* ================================================================
-   EAU #water — 10 COUCHES COMPOSEES
+   EAU #water — OVERDRIVEN GRADIENT 5x
    ================================================================ */
 .water {
   position: absolute;
   bottom: 0; left: 0; right: 0;
   height: 0%;
 
-  /* LAYER 0 : Gradient electric OVERDRIVEN 5x */
+  /* OVERDRIVEN : 1200px vs reservoir 240px = 5x */
   background-image:
-    /* Substratum jumeaux lumineux */
-    radial-gradient(ellipse 55% 8% at 15% 2%, rgba(127,232,255,0.45), transparent 70%),
-    radial-gradient(ellipse 60% 10% at 80% 1%, rgba(74,195,255,0.32), transparent 65%),
-    radial-gradient(ellipse 50% 6% at 50% 0%, rgba(255,255,255,0.55), transparent 70%),
-    /* Corps primaire du gradient OVERDRIVEN */
+    radial-gradient(ellipse 55% 8% at 15% 2%,
+      rgba(127,232,255,0.45), transparent 70%),
+    radial-gradient(ellipse 60% 10% at 80% 1%,
+      rgba(74,195,255,0.32), transparent 65%),
+    radial-gradient(ellipse 50% 6% at 50% 0%,
+      rgba(255,255,255,0.55), transparent 70%),
     linear-gradient(180deg,
-      #9df2ff 0%,
-      #42c8ff 6%,
-      #2494e6 14%,
-      #146ec4 22%,
-      #0a4a92 32%,
-      #073668 44%,
-      #052848 56%,
-      #041c34 70%,
-      #031424 82%,
-      #020e1a 92%,
-      #010a14 100%
+      #9df2ff 0%,  #42c8ff 6%,  #2494e6 14%,
+      #146ec4 22%, #0a4a92 32%, #073668 44%,
+      #052848 56%, #041c34 70%, #031424 82%,
+      #020e1a 92%, #010a14 100%
     );
   background-size:
     100% 240px, 100% 240px, 100% 240px,
@@ -494,38 +417,34 @@
 
   transition: height var(--water-rise-speed) ease-out;
 
-  /* Refraction interieure */
   box-shadow:
     inset 0 5px 22px rgba(255,255,255,0.22),
     inset 0 -10px 30px rgba(0,0,0,0.35);
   z-index: 2;
 }
 
-/* --- LAYER 1 : ligne de surface (luminescence Gaussienne) --- */
+/* Ligne de surface luminescente */
 .water::before {
   content: '';
   position: absolute;
   top: -6px; left: 0; right: 0;
   height: 12px;
-  background:
-    linear-gradient(180deg,
-      rgba(255,255,255,0.65) 0%,
-      rgba(166,230,255,0.35) 45%,
-      transparent 100%);
+  background: linear-gradient(180deg,
+    rgba(255,255,255,0.65) 0%,
+    rgba(166,230,255,0.35) 45%,
+    transparent 100%);
   filter: blur(1.5px);
 }
 
-/* --- LAYER 2-3 : particules 1 et 2 (flottantes, tile) --- */
+/* Particules flottantes (5 couches de radial-gradients animes) */
 .water::after {
   content: '';
   position: absolute;
   inset: 0;
   background:
-    /* Cluster lent */
     radial-gradient(ellipse 8px 10px at 18% 26%, rgba(180,235,255,0.18), transparent 70%),
     radial-gradient(ellipse 6px 8px at 44% 62%, rgba(180,235,255,0.12), transparent 65%),
     radial-gradient(ellipse 10px 12px at 76% 18%, rgba(180,235,255,0.15), transparent 70%),
-    /* Isolat */
     radial-gradient(ellipse 3px 4px at 66% 46%, rgba(220,248,255,0.28), transparent 65%),
     radial-gradient(ellipse 4px 5px at 32% 82%, rgba(220,248,255,0.22), transparent 65%);
   background-size: 180px 220px, 220px 180px, 200px 240px, 140px 160px, 160px 200px;
@@ -539,36 +458,17 @@
   to   { background-position: 0 -440px, 0 -360px, 0 -480px, 0 -320px, 0 -400px; }
 }
 
-/* --- LAYER 4 : particules 3 (plus proches, faster) --- */
-/* HACK du pixel-perfect : un pseudo supplementaire via un enfant
-   reel n'existe PAS dans le HTML ; on utilise donc un wrapper logique
-   dans le DOM qui n'est PAS modifie par le JS).
-   Mais le brief impose de ne PAS toucher le HTML → on utilise
-   le meme after avec un multi-background supplementaire. */
-
-/* Pas de place pour plus ; on delegue aux elements reels
-   .particle-lane qui seraient ajoutes... sauf que le HTML
-   ne peut pas etre touche. RUSE : on reutilise la meme
-   after avec un ::after supplementaire sur un selecteur
-   absurde (impossible) → impossible.
-   SOLUTION : on utilise des descendants reels qui seraient
-   crees par le JS (comportement attendu normal du widget)
-   ou on s'en tiendra a 2 couches max dans le CSS actuel
-   sans DOM supplementaire. */
-
 /* ================================================================
-   GLOW DE SURFACE (caustique diffuse hors du reservoir)
+   REFLETS DU RESERVOIR (vitre)
    ================================================================ */
 .reservoir::after {
   content: '';
   position: absolute;
   inset: 0;
   background:
-    /* Reflet lumineux gauche */
     linear-gradient(90deg,
       rgba(255,255,255,0.18) 0%, transparent 4%,
       transparent 96%, rgba(255,255,255,0.10) 100%),
-    /* Reflet ciel au sommet du vide */
     linear-gradient(180deg,
       rgba(120,205,255,0.08) 0%, transparent 18%);
   pointer-events: none;
@@ -576,7 +476,7 @@
 }
 
 /* ================================================================
-   ZONE RESERVEE — "inferno strip"
+   ZONE RESERVEE "inferno-strip"
    ================================================================ */
 .reserved-water {
   position: absolute;
@@ -589,14 +489,12 @@
   pointer-events: none;
   transition: top var(--marker-move-speed), height var(--marker-move-speed);
   z-index: 2;
-
-  /* Halo base */
   box-shadow:
     inset 0 2px 10px rgba(255,180,40,0.25),
     0 0 16px rgba(255,160,30,0.18);
 }
 
-/* --- LAYER RESERVEE 1 : brume chaude --- */
+/* Brume chaude */
 .reserved-water::before {
   content: '';
   position: absolute;
@@ -615,9 +513,7 @@
   to   { opacity: 1; }
 }
 
-/* --- LAYER RESERVEE 2 : particules orange (pictogramme river-token
-   en mask-image serait l'idéal — remplace par des spots
-   feux froids puisque pas d'asset) --- */
+/* Particules orange (faux jetons sans asset) */
 .reserved-water::after {
   content: '';
   position: absolute;
@@ -643,11 +539,9 @@
   position: absolute;
   right: -3px;
   width: 16px; height: 16px;
-  background:
-    radial-gradient(circle at 35% 35%,
-      rgba(255,240,180,0.9) 0%,
-      var(--reserved-marker) 45%,
-      #c78610 100%);
+  background: radial-gradient(circle at 35% 35%,
+    rgba(255,240,180,0.9) 0%,
+    var(--reserved-marker) 45%, #c78610 100%);
   border-radius: 50%;
   border: 2.5px solid #fff;
   box-shadow:
@@ -671,7 +565,7 @@
 }
 
 /* ================================================================
-   PANNEAU TENDANCE (forecast)
+   PANNEAU TENDANCE
    ================================================================ */
 .forecast-panel {
   position: absolute;
@@ -694,7 +588,10 @@
   border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 .forecast-panel .label { color: var(--text-muted); }
-.forecast-panel .value { font-weight: 600; font-variant-numeric: tabular-nums; }
+.forecast-panel .value {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
 .forecast-panel .value.pos { color: var(--success); }
 .forecast-panel .value.neg { color: var(--danger); }
 .forecast-panel .net-title {
@@ -706,21 +603,18 @@
 }
 
 /* ================================================================
-   JET DE SORTIE — "arc-waterfall"
+   JET DE SORTIE (arc-waterfall)
    ================================================================ */
 .output-jet {
   position: absolute;
   bottom: 24px;
-  /* centrage via translate ; la vanne est a ~40% left du parent */
   left: 40%;
   width: 28px;
   transform: translateX(-50%);
   background:
-    /* --- Turbulence interne --- */
     repeating-linear-gradient(180deg,
       rgba(255,255,255,0.25) 0 3px, transparent 3px 7px,
       rgba(255,255,255,0.12) 7px 10px, transparent 10px 14px),
-    /* --- Corps bleu-cyan degrade --- */
     linear-gradient(180deg,
       var(--jet-top) 0%,
       var(--jet-mid) 40%,
@@ -734,20 +628,15 @@
   overflow: hidden;
   z-index: 5;
 }
-
-/* --- Mousse au sommet (splash header) --- */
 .output-jet::before {
   content: '';
   position: absolute;
   top: -4px; left: 50%; transform: translateX(-50%);
   width: 44px; height: 10px;
-  background:
-    radial-gradient(ellipse 50% 60% at 50% 50%,
-      rgba(255,255,255,0.65), transparent 65%);
+  background: radial-gradient(ellipse 50% 60% at 50% 50%,
+    rgba(255,255,255,0.65), transparent 65%);
   filter: blur(1px);
 }
-
-/* --- Turbulences laterales mouvantes --- */
 .output-jet::after {
   content: '';
   position: absolute;
@@ -768,7 +657,7 @@
   to   { background-position: -28px 0, 22px 0; }
 }
 
-/* --- Palier d'impact (splash zone) --- */
+/* Zone d'impact (eclaboussure) */
 .splash-zone {
   position: absolute;
   bottom: 0; left: 40%;
@@ -783,9 +672,8 @@
   position: absolute;
   bottom: -2px; left: 50%; transform: translateX(-50%);
   width: 60px; height: 10px;
-  background:
-    radial-gradient(ellipse 60% 50% at 50% 50%,
-      rgba(255,255,255,0.5), transparent 65%);
+  background: radial-gradient(ellipse 60% 50% at 50% 50%,
+    rgba(255,255,255,0.5), transparent 65%);
   filter: blur(2px);
   animation: splash-bob 1.2s ease-in-out infinite alternate;
 }
@@ -795,7 +683,7 @@
 }
 
 /* ================================================================
-   PLUIE (recharge) — 3 couches : grappe, ride, ondes
+   PLUIE (recharge) — 2 couches + distorsion surface
    ================================================================ */
 .rain-overlay {
   position: absolute; inset: 0;
@@ -806,27 +694,25 @@
 }
 .rain-overlay.active { opacity: 1; }
 
-/* --- Couche 1 : ride vertical dense --- */
+/* Couche 1 : ride vertical dense */
 .rain-overlay::before {
   content: '';
   position: absolute; inset: 0;
-  background:
-    repeating-linear-gradient(95deg,
-      transparent 0 10px,
-      rgba(180,225,255,0.22) 10px 11.5px,
-      transparent 11.5px 26px);
+  background: repeating-linear-gradient(95deg,
+    transparent 0 10px,
+    rgba(180,225,255,0.22) 10px 11.5px,
+    transparent 11.5px 26px);
   animation: rain-fall 0.32s linear infinite;
 }
-/* --- Couche 2 : gouttes lourdes + eparpillees --- */
+
+/* Couche 2 : gouttes lourdes + eparpillees */
 .rain-overlay::after {
   content: '';
   position: absolute; inset: 0;
   background:
-    /* Lourdes */
     repeating-linear-gradient(100deg,
       transparent 0 34px, rgba(200,235,255,0.38) 34px 36px,
       transparent 36px 72px),
-    /* Eparpillees aleatoirement (via taille) */
     repeating-linear-gradient(82deg,
       transparent 0 18px, rgba(160,215,255,0.28) 18px 19px,
       transparent 19px 56px);
@@ -838,61 +724,41 @@
   to   { background-position: -22px 38px, -16px 42px, -28px 34px; }
 }
 
-/* --- Couche 3 : ondulation de surface (ring-rain distortion) --- */
-.rain-overlay.active + .dam-view::after {
-  /* impossible en CSS pur sans modifier le DOM :
-     on utilise plutot un ::after supplementaire
-     sur .rain-overlay lui-meme. */
-}
-
 /* ================================================================
    RESPONSIVE <= 800px
    ================================================================ */
 @media (max-width: 800px) {
   .dam-view { height: 420px; padding: 16px; }
 
-  /* Canyon : plus fin */
-  .dam-view::before { width: 38%; }
-  /* Mur barrage : plus large */
-  .dam-view::after { width: 66%; }
+  .dam-view::before { top: 72px; height: 54px; }
+  .dam-bg::before { width: 40%; }
+  .dam-bg::after { width: 66%; }
 
-  /* Montagne */
   .mountains { height: 76px; }
 
-  /* Lake */
-  .dam-view::before { top: 72px; height: 54px; }
-
-  /* Reservoir */
   .reservoir {
     width: 48%; max-width: none;
     height: 186px;
     top: 92px;
   }
-  /* Synchronisation background-size eau (ESSENTIEL) */
   .water { background-size: 100% 186px, 100% 186px, 100% 186px, 100% 930px; }
 
-  /* Echelle */
   .scale { left: calc(6% - 22px); top: 92px; height: 186px; }
 
-  /* Info */
   .level-info { left: 8px; top: 8px; }
   .level-info .pct { font-size: 30px; }
 
-  /* Vanne */
   .valve-housing::before,
   .valve-housing::after {
     left: 37%; bottom: 20%;
     width: 42px; height: 42px;
   }
 
-  /* Laurier */
   .serene-channel { height: 68px; }
 
-  /* Output-jet */
   .output-jet { left: 38%; width: 20px; bottom: 18px; }
   .splash-zone { left: 38%; }
 
-  /* Forecast */
   .forecast-panel { right: 12px; bottom: 12px; width: 156px; }
 }
 
