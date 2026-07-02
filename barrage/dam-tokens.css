@@ -3,12 +3,12 @@
  * --------------
  * FICHIER DE REFERENCE DU SYSTEME DE DESIGN
  *
- * Ce fichier centralise les valeurs réutilisables :
+ * Ce fichier centralise les valeurs reutilisables :
  * - couleurs de l'eau, de l'interface, des alertes
  * - vitesses d'animation
  * - espacements et rayons
  *
- * Le graphiste peut modifier ces valeurs, mais il est conseillé
+ * Le graphiste peut modifier ces valeurs, mais il est conseille
  * de ne pas supprimer les variables utilisees dans dam-widget.css
  * et dam-artwork.css.
  */
@@ -40,19 +40,36 @@
   --warning: #f0b338;
   --danger: #e85a5a;
 
-  /* === Réservation / dépense ponctuelle === */
+  /* === Reservation / depense ponctuelle === */
   --reserved-stripe-1: rgba(240, 179, 56, 0.35);
   --reserved-stripe-2: rgba(240, 179, 56, 0.55);
   --reserved-marker: #f0b338;
+  --reserved-glow: rgba(240, 179, 56, 0.45);
+  --reserved-plate-bg: rgba(255, 180, 60, 0.12);
 
   /* === Jet de sortie (vanne principale) === */
   --jet-top: #3ec6ff;
   --jet-bottom: #1a78d6;
+  --jet-foam: rgba(200, 240, 255, 0.65);
+  --jet-splash: rgba(255, 255, 255, 0.5);
+
+  /* === Particules / tokens === */
+  --token-size-sm: 10px;
+  --token-size-md: 18px;
+  --token-size-lg: 26px;
+  --token-water: rgba(180, 230, 255, 0.35);
+  --token-reserved: rgba(255, 190, 80, 0.5);
+  --token-water-glow: rgba(100, 210, 255, 0.2);
+  --token-reserved-glow: rgba(255, 170, 50, 0.35);
 
   /* === Animations === */
   --water-rise-speed: 0.45s;
   --rain-speed: 0.5s;
   --marker-move-speed: 0.3s;
+  --token-float-speed: 10s;
+  --token-float-speed-fast: 7s;
+  --jet-flow-speed: 0.35s;
+  --foam-pulse-speed: 0.8s;
 
   /* === Espacements === */
   --radius-sm: 8px;
