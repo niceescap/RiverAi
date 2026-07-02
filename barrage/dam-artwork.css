@@ -153,22 +153,33 @@
   right: 0; top: 0;
   width: 62%; height: 100%;
   background:
+    /* --- Vanne mecanique (turbine statique integree au mur) --- */
+    radial-gradient(circle 14px at 49% 78%,
+      rgba(210,220,232,0.18) 0%, rgba(210,220,232,0.18) 55%,
+      rgba(215,227,236,0.08) 65%, transparent 70%),
+    /* --- Halo ambiant en haut centre --- */
     radial-gradient(ellipse 45% 30% at 50% 14%,
       rgba(95,214,255,0.14), transparent 70%),
+    /* --- Jointures horizontales (anneaux) --- */
     repeating-linear-gradient(180deg,
       transparent 0 9.5%, rgba(0,0,0,0.35) 9.5%,
       rgba(0,0,0,0.35) 10%, transparent 10%),
+    /* --- Jointures verticales --- */
     repeating-linear-gradient(90deg,
       transparent 0 11.8%, rgba(0,0,0,0.28) 11.8%,
       rgba(0,0,0,0.28) 12%, transparent 12%),
+    /* --- Rainures beton --- */
     repeating-linear-gradient(90deg,
       rgba(255,255,255,0.055) 0 2px, transparent 2px 34px),
+    /* --- Ombres laterales --- */
     linear-gradient(90deg,
       rgba(0,0,0,0.55) 0%, transparent 8%,
       transparent 92%, rgba(0,0,0,0.55) 100%),
+    /* --- Fente centrale --- */
     linear-gradient(90deg,
       transparent 46%, rgba(2,8,14,0.55) 46%,
       rgba(2,8,14,0.55) 54%, transparent 54%),
+    /* --- Degrade fond --- */
     linear-gradient(135deg,
       #4c6278 0%, var(--dam-wall) 42%,
       #2a3745 78%, #131d28 100%);
