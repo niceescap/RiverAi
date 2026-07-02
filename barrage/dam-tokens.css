@@ -8,13 +8,13 @@
 
 :root {
   /* === EAU (validees) === */
-  --water-full-top:    #7de9ff;
-  --water-full-mid:    #2a9ad6;
-  --water-full-bottom: #0d5a94;
+  --water-full-top:    #7df2ff;
+  --water-full-mid:    #2eb6ff;
+  --water-full-bottom: #0d6ab5;
 
-  --water-empty-top:    #1a3a5c;
-  --water-empty-mid:    #0d2844;
-  --water-empty-bottom: #071a2b;
+  --water-empty-top:    #0a3a6e;
+  --water-empty-mid:    #0a2d5c;
+  --water-empty-bottom: #051a2e;
 
   /* === Atmosphere === */
   --sky-glow: rgba(46, 182, 255, 0.22);
