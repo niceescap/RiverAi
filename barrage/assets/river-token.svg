@@ -14,8 +14,8 @@
   l'element qui porte le masque. On peut donc reutiliser CE MEME fichier
   et le teinter en bleu (eau) ou en orange (reserve) sans dupliquer d'asset.
 
-  Les leg�res variations d'opacite entre les 3 polygones creent un effet
-  de facettes (comme un petit diamant/gemme) une fois passe au travers
+  Les variations d'opacite entre les 3 polygones creent un effet de
+  facettes (comme un petit diamant/gemme) une fois passe au travers
   du masque : cela reste visible car les navigateurs interpretent
   l'opacite du SVG source comme des niveaux de transparence du masque.
 -->
