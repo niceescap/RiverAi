@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  river-token.svg
+  ----------------
+  Pictogramme RiverAI : l'unite visuelle d'energie / de token.
+  Reutilise PARTOUT dans dam-artwork.css comme :
+    - particule flottant dans l'eau du reservoir (#water)
+    - particule de la zone de depense reservee (.reserved-water)
+    - (potentiellement) petit repere sur la plaque de vanne temporaire
+
+  IMPORTANT : ce fichier est utilise cote CSS via `mask-image` (et non
+  `background-image`). Seule la silhouette (canal alpha) compte : la
+  couleur reelle affichee est definie en CSS (`background-color`) sur
+  l'element qui porte le masque. On peut donc reutiliser CE MEME fichier
+  et le teinter en bleu (eau) ou en orange (reserve) sans dupliquer d'asset.
+
+  Les variations d'opacite entre les 3 polygones creent un effet de
+  facettes (comme un petit diamant/gemme) une fois passe au travers
+  du masque : cela reste visible car les navigateurs interpretent
+  l'opacite du SVG source comme des niveaux de transparence du masque.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Silhouette principale : forme de jeton/gemme a facettes -->
+  <polygon points="32,3 60,26 32,61 4,26" fill="#000000"/>
+  <!-- Facette superieure (legerement plus transparente = reflet interne) -->
+  <polygon points="32,3 47,24 17,24" fill="#000000" opacity="0.5"/>
+  <!-- Petite pointe de brillance (facette la plus opaque) -->
+  <polygon points="23,15 31,15 21,31 15,25" fill="#000000" opacity="0.85"/>
+</svg>
